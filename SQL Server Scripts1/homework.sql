@@ -1,0 +1,10 @@
+﻿CREATE DATABASE Academy
+USE Academy 
+CREATE TABLE Group
+(
+ id INT PRIMARY KEY IDENTITY(1,1) NOT NULL,
+ Name NVARCHAR(10) 
+    NOT NULL 
+    UNIQUE 
+    CHECK (LEN(Name) > 0)
+);
