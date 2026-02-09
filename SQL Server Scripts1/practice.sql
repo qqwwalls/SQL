@@ -59,3 +59,40 @@ FROM books b
 JOIN authors a ON b.author_id = a.id
 JOIN genre g ON b.genre_id = g.id;
 GO
+
+ALTER TABLE books
+ADD price DECIMAL(10,2);
+GO
+
+UPDATE books SET price = 350.50 WHERE id = 1;
+UPDATE books SET price = 280.00 WHERE id = 2;
+UPDATE books SET price = 420.75 WHERE id = 3;
+UPDATE books SET price = 150.00 WHERE id = 4;
+GO
+
+SELECT DISTINCT title
+FROM books;
+GO
+
+SELECT TOP 5 *
+FROM books;
+GO
+
+SELECT *
+FROM books
+WHERE price = (SELECT MAX(price) FROM books);
+GO
+
+SELECT AVG(price) AS AveragePrice
+FROM books
+WHERE [year] > 1830;
+GO
+
+SELECT
+    COUNT(*) AS TotalBooks,
+    SUM(price) AS TotalPrice,
+    MIN(price) AS MinPrice,
+    MAX(price) AS MaxPrice,
+    AVG(price) AS AvgPrice
+FROM books;
+GO
