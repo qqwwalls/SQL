@@ -96,3 +96,13 @@ SELECT
     AVG(price) AS AvgPrice
 FROM books;
 GO
+
+SELECT
+    a.name,
+    a.surname,
+    SUM(b.price) AS TotalPrice
+FROM authors a
+JOIN books b ON a.id = b.author_id
+GROUP BY
+    a.name,
+    a.surname;
