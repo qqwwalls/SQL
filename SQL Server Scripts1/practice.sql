@@ -122,3 +122,16 @@ GROUP BY
     a.name,
     a.surname
 ORDER BY a.id;
+
+GO
+SELECT 
+    b.title,
+    b.price,
+    g.title AS genre
+FROM books b
+JOIN booktToGenres bg ON b.id = bg.id_book
+JOIN genres g ON bg.id_genre = g.id
+WHERE b.price = (
+    SELECT MAX(price) 
+    FROM books
+);
