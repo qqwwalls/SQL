@@ -1,4 +1,12 @@
-﻿USE book__store;
+﻿CREATE DATABASE Library_PV521;
+USE Library_PV521;
+GO
+
+CREATE TABLE genres(
+  id INT PRIMARY KEY IDENTITY(1,1),
+  title NVARCHAR(50) NOT NULL
+)
+
 GO
 
 CREATE TABLE authors(
@@ -6,103 +14,72 @@ CREATE TABLE authors(
   name NVARCHAR(30) NOT NULL,
   surname NVARCHAR(30) NOT NULL
 );
-GO
 
-CREATE TABLE genre(
-  id INT PRIMARY KEY IDENTITY(1,1),
-  genre NVARCHAR(30) NOT NULL
-);
 GO
 
 CREATE TABLE books(
   id INT PRIMARY KEY IDENTITY(1,1),
-  title NVARCHAR(30) NOT NULL,
-  [year] INT NOT NULL 
-        CHECK ([year] >= 1800 AND [year] <= YEAR(GETDATE())),
-  author_id INT NOT NULL 
-        FOREIGN KEY REFERENCES authors(id),
-  genre_id INT NOT NULL 
-        FOREIGN KEY REFERENCES genre(id)
+  title NVARCHAR(50) NOT NULL,
+  [year] int NOT NULL,
+  price decimal(10,2) NOT NULL,
+  id_author int FOREIGN KEY REFERENCES authors(id)
+  ON DELETE CASCADE ON UPDATE CASCADE
 );
+
 GO
 
+CREATE TABLE booktToGenres(
+  id INT PRIMARY KEY IDENTITY(1,1),
+  id_book INT FOREIGN KEY REFERENCES books(id),
+  id_genre INT FOREIGN KEY REFERENCES genres(id)
+);
 
-INSERT INTO genre (genre)
-VALUES 
+INSERT INTO genres (title) VALUES 
 ('Fantasy'),
-('Detective'),
 ('Science Fiction'),
+('Detective'),
+('Romance'),
+('Horror'),
+('Historical'),
+('Adventure'),
 ('Drama');
-GO
 
-INSERT INTO authors (name, surname)
-VALUES
+INSERT INTO authors (name, surname) VALUES
+('Stephen', 'King'),
+('Agatha', 'Christie'),
 ('J.K.', 'Rowling'),
-('Arthur', 'Doyle'),
-('Isaac', 'Asimov'),
-('William', 'Shakespeare');
-GO
+('George', 'Orwell'),
+('Jane', 'Austen'),
+('Ernest', 'Hemingway'),
+('Mark', 'Twain'),
+('Arthur', 'Doyle');
 
-INSERT INTO books (title, [year], author_id, genre_id)
-VALUES
-('Harry Potter', 1997, 1, 1),
-('Sherlock Holmes', 1892, 2, 2),
-('Foundation', 1951, 3, 3),
-('Hamlet', 1803, 4, 4);  
-GO
 
-SELECT
-    b.title AS Book,
-    a.name + ' ' + a.surname AS Author,
-    g.genre AS Genre
-FROM books b
-JOIN authors a ON b.author_id = a.id
-JOIN genre g ON b.genre_id = g.id;
-GO
+INSERT INTO books (title, [year], price, id_author) VALUES
+('The Shining', 1977, 15.99, 1),
+('Murder on the Orient Express', 1934, 12.50, 2),
+('Harry Potter and the Philosopher''s Stone', 1997, 20.00, 3),
+('1984', 1949, 14.30, 4),
+('Pride and Prejudice', 1813, 10.99, 5),
+('The Old Man and the Sea', 1952, 13.45, 6),
+('Adventures of Huckleberry Finn', 1884, 11.25, 7),
+('Sherlock Holmes: A Study in Scarlet', 1887, 16.75, 8),
+('Animal Farm', 1945, 9.99, 4),
+('It', 1986, 18.60, 1);
 
-ALTER TABLE books
-ADD price DECIMAL(10,2);
-GO
 
-UPDATE books SET price = 350.50 WHERE id = 1;
-UPDATE books SET price = 280.00 WHERE id = 2;
-UPDATE books SET price = 420.75 WHERE id = 3;
-UPDATE books SET price = 150.00 WHERE id = 4;
-GO
+INSERT INTO booktToGenres (id_book, id_genre) VALUES
+(1, 5),  -- The Shining -> Horror
+(2, 3),  -- Murder on the Orient Express -> Detective
+(3, 1),  -- Harry Potter -> Fantasy
+(3, 7),  -- Harry Potter -> Adventure
+(4, 2),  -- 1984 -> Science Fiction
+(4, 8),  -- 1984 -> Drama
+(5, 4),  -- Pride and Prejudice -> Romance
+(6, 8),  -- The Old Man and the Sea -> Drama
+(7, 7),  -- Huckleberry Finn -> Adventure
+(8, 3),  -- Sherlock Holmes -> Detective
+(9, 2),  -- Animal Farm -> Science Fiction
+(10, 5); -- It -> Horror
 
-SELECT DISTINCT title
-FROM books;
-GO
 
-SELECT TOP 5 *
-FROM books;
-GO
-
-SELECT *
-FROM books
-WHERE price = (SELECT MAX(price) FROM books);
-GO
-
-SELECT AVG(price) AS AveragePrice
-FROM books
-WHERE [year] > 1830;
-GO
-
-SELECT
-    COUNT(*) AS TotalBooks,
-    SUM(price) AS TotalPrice,
-    MIN(price) AS MinPrice,
-    MAX(price) AS MaxPrice,
-    AVG(price) AS AvgPrice
-FROM books;
-GO
-
-SELECT
-    a.name,
-    a.surname,
-    SUM(b.price) AS TotalPrice
-FROM authors a
-JOIN books b ON a.id = b.author_id
-GROUP BY
-    a.name,
-    a.surname;
