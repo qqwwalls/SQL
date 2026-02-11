@@ -82,4 +82,43 @@ INSERT INTO booktToGenres (id_book, id_genre) VALUES
 (9, 2),  -- Animal Farm -> Science Fiction
 (10, 5); -- It -> Horror
 
+SELECT b.id, b.title, b.year, b.price, g.title FROM books b
+INNER JOIN booktToGenres bg
+ON b.id=bg.id_book
+INNER JOIN genres g
+ON bg.id_genre=g.id;
 
+GO
+SELECT b.id, b.title, b.year, b.price, g.title
+FROM books b, genres g, booktToGenres bg
+WHERE b.id=bg.id_book AND g.id=bg.id_genre
+
+GO
+
+SELECT 
+    b.title,
+    a.name,
+    a.surname,
+    COUNT(bg.id_genre) AS genre_count
+FROM books b
+JOIN authors a ON b.id_author = a.id
+LEFT JOIN booktToGenres bg ON b.id = bg.id_book
+GROUP BY b.title, a.name, a.surname;
+
+GO
+
+SELECT 
+    a.id,
+    a.name,
+    a.surname,
+    COUNT(DISTINCT bg.id_genre) AS genre_count
+FROM authors a
+LEFT JOIN books b 
+    ON a.id = b.id_author
+LEFT JOIN booktToGenres bg 
+    ON b.id = bg.id_book
+GROUP BY 
+    a.id,
+    a.name,
+    a.surname
+ORDER BY a.id;
