@@ -103,3 +103,178 @@ VALUES
 ('2003-12-03', 'Dmytro', 600, 15500, 'Polishchuk');
 
 SELECT * FROM Teachers;
+GO 
+
+ALTER TABLE Teachers
+ADD IsAssistant BIT NOT NULL CONSTRAINT DF_Teachers_IsAssistant DEFAULT 0;
+GO
+
+ALTER TABLE Teachers
+ADD IsProfessor BIT NOT NULL CONSTRAINT DF_Teachers_IsProfessor DEFAULT 0;
+GO
+
+ALTER TABLE Teachers
+ADD Position NVARCHAR(MAX) NOT NULL CONSTRAINT DF_Teachers_Position DEFAULT 'No Position'
+    CHECK (LEN(Position) > 0);
+GO
+
+UPDATE Teachers
+SET Position = 'Assistant', IsAssistant = 1
+WHERE Name IN ('Ivan', 'Natalia');
+
+UPDATE Teachers
+SET Position = 'Professor', IsProfessor = 1
+WHERE Name IN ('Iryna', 'Andrii');
+
+UPDATE Teachers
+SET Position = 'Lecturer'
+WHERE Position = 'No Position';
+GO
+
+SELECT * FROM Teachers;
+GO
+
+ALTER TABLE Faculties
+ALTER COLUMN Name NVARCHAR(100) NOT NULL;
+GO
+
+ALTER TABLE Faculties
+ADD Dean NVARCHAR(MAX) NOT NULL CONSTRAINT DF_Faculties_Dean DEFAULT 'No Dean'
+    CHECK (LEN(Dean) > 0);
+GO
+
+UPDATE Faculties
+SET Dean = 'Dr. Ivanov'
+WHERE Name = 'CS';
+
+UPDATE Faculties
+SET Dean = 'Dr. Petrenko'
+WHERE Name = 'Math';
+
+UPDATE Faculties
+SET Dean = 'Dr. Shevchenko'
+WHERE Dean = 'No Dean';
+GO
+
+SELECT * FROM Faculties;
+GO
+
+INSERT INTO [Group] (Name, Rating, Year)
+VALUES
+('G5A', 3, 5),
+('G5B', 4, 5);
+GO
+
+INSERT INTO Departments (Name, Financing)
+VALUES ('Software Development', 20000);
+GO
+
+INSERT INTO Faculties (Name, Dean)
+VALUES ('Computer Science', 'Dr. Brown');
+GO
+
+INSERT INTO Teachers
+(EmploymentDate, Name, Premium, Salary, Surname,
+ IsAssistant, IsProfessor, Position)
+VALUES
+('2019-01-01','Test1',200,500,'Smallpay',1,0,'Assistant'),
+('2018-02-02','Test2',150,400,'Lowmoney',1,0,'Assistant');
+GO
+
+-- 1. Таблиця кафедр у зворотному порядку полів
+SELECT Financing, Name, Id
+FROM Departments;
+GO
+
+-- 2. Назви груп та рейтинги з псевдонімами
+SELECT Name AS [Group Name],
+       Rating AS [Group Rating]
+FROM [Group];
+GO
+
+-- 3. Прізвище + відсоток ставки від надбавки та від загальної зарплати
+SELECT Surname,
+       (Salary * 100.0 / NULLIF(Premium,0)) AS [Salary% of Premium],
+       (Salary * 100.0 / (Salary + Premium)) AS [Salary% of Total]
+FROM Teachers;
+GO
+
+-- 4. Факультети одним рядком
+SELECT 'The dean of faculty ' + Name + ' is ' + Dean + '.'
+       AS FacultyInfo
+FROM Faculties;
+GO
+
+-- 5. Прізвища професорів зі ставкою > 1050
+SELECT Surname
+FROM Teachers
+WHERE IsProfessor = 1
+  AND Salary > 1050;
+GO
+
+-- 6. Назви кафедр з фінансуванням <11000 або >25000
+SELECT Name
+FROM Departments
+WHERE Financing < 11000
+   OR Financing > 25000;
+GO
+
+-- 7. Назви факультетів, окрім "Computer Science"
+SELECT Name
+FROM Faculties
+WHERE Name <> 'Computer Science';
+GO
+
+-- 8. Прізвища та посади не професорів
+SELECT Surname, Position
+FROM Teachers
+WHERE IsProfessor = 0;
+GO
+
+-- 9. Асистенти з Premium між 160 і 550
+SELECT Surname, Position, Salary, Premium
+FROM Teachers
+WHERE IsAssistant = 1
+  AND Premium BETWEEN 160 AND 550;
+GO
+
+-- 10. Прізвища та ставки асистентів
+SELECT Surname, Salary
+FROM Teachers
+WHERE IsAssistant = 1;
+GO
+
+-- 11. Викладачі прийняті до 2000 року
+SELECT Surname, Position
+FROM Teachers
+WHERE EmploymentDate < '2000-01-01';
+GO
+
+-- 12. Назви кафедр перед "Software Development"
+SELECT Name AS [Name of Department]
+FROM Departments
+WHERE Name < 'Software Development'
+ORDER BY Name;
+GO
+
+-- 13. Асистенти із зарплатою (Salary+Premium) ≤ 1200
+SELECT Surname
+FROM Teachers
+WHERE IsAssistant = 1
+  AND (Salary + Premium) <= 1200;
+GO
+
+-- 14. Групи 5 курсу з рейтингом 2–4
+SELECT Name
+FROM [Group]
+WHERE Year = 5
+  AND Rating BETWEEN 2 AND 4;
+GO
+
+-- 15. Асистенти зі ставкою <550 або Premium <200
+SELECT Surname
+FROM Teachers
+WHERE IsAssistant = 1
+  AND (Salary < 550 OR Premium < 200);
+GO
+
