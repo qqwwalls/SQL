@@ -135,3 +135,33 @@ WHERE b.price = (
     SELECT MAX(price) 
     FROM books
 );
+GO
+
+CREATE VIEW books_authors_view
+AS
+SELECT b.id, b.title, b.price, a.surname FROM books b
+INNER JOIN authors a
+ON b.id_author=a.id
+
+GO
+SELECT title FROM books_authors_view WHERE price>16;
+
+GO
+
+CREATE VIEW books_genres_view AS
+SELECT 
+    b.id AS book_id,
+    b.title AS book_title,
+    b.price,
+    STRING_AGG(g.title, ', ') AS genres
+FROM books b
+JOIN booktToGenres bg ON b.id = bg.id_book
+JOIN genres g ON bg.id_genre = g.id
+GROUP BY b.id, b.title, b.price;
+GO
+
+SELECT *
+FROM books_genres_view
+WHERE price > 12
+  AND genres NOT LIKE '%Fantasy%';
+GO
