@@ -165,3 +165,72 @@ FROM books_genres_view
 WHERE price > 12
   AND genres NOT LIKE '%Fantasy%';
 GO
+--
+ALTER TABLE books
+ADD is_active BIT DEFAULT(1);
+
+GO
+SELECT * FROM books;
+GO
+
+UPDATE books SET is_active=1;
+
+GO
+
+ALTER TABLE books
+
+GO
+CREATE TRIGGER booksDeleteTrigger
+ON books
+INSTEAD OF DELETE
+AS
+BEGIN
+  -- inserted, deleted
+  UPDATE books SET is_active=0
+  WHERE id IN(
+  SELECT id FROM deleted)
+END
+
+GO
+
+DROP TRIGGER  booksDeleteTrigger
+GO
+
+DELETE FROM books WHERE id IN(2,3);
+
+SELECT * FROM books;
+
+GO 
+--
+ALTER TABLE authors
+ADD discount DECIMAL(5,2) NOT NULL DEFAULT 0;
+GO
+
+ALTER TABLE books
+ADD base_price DECIMAL(10,2);
+GO
+
+UPDATE books
+SET base_price = price;
+GO
+
+CREATE TRIGGER trg_UpdateAuthorDiscount
+ON authors
+AFTER UPDATE
+AS
+BEGIN
+    IF UPDATE(discount)
+    BEGIN
+        UPDATE b
+        SET b.price = b.base_price - (b.base_price * i.discount / 100)
+        FROM books b
+        INNER JOIN inserted i ON b.id_author = i.id
+    END
+END
+GO
+
+UPDATE authors
+SET discount = 15
+WHERE id = 1;
+
+SELECT * FROM books;
