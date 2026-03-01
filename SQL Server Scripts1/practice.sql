@@ -1,236 +1,219 @@
-﻿CREATE DATABASE Library_PV521;
-USE Library_PV521;
+﻿CREATE DATABASE AcademyDB;
 GO
 
-CREATE TABLE genres(
-  id INT PRIMARY KEY IDENTITY(1,1),
-  title NVARCHAR(50) NOT NULL
-)
-
+USE AcademyDB;
 GO
 
-CREATE TABLE authors(
-  id INT PRIMARY KEY IDENTITY(1,1),
-  name NVARCHAR(30) NOT NULL,
-  surname NVARCHAR(30) NOT NULL
+CREATE TABLE Faculties
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL UNIQUE,
+    CONSTRAINT CK_Faculties_Name_NotEmpty CHECK (Name <> '')
 );
 
-GO
-
-CREATE TABLE books(
-  id INT PRIMARY KEY IDENTITY(1,1),
-  title NVARCHAR(50) NOT NULL,
-  [year] int NOT NULL,
-  price decimal(10,2) NOT NULL,
-  id_author int FOREIGN KEY REFERENCES authors(id)
-  ON DELETE CASCADE ON UPDATE CASCADE
+CREATE TABLE Departments
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Financing MONEY NOT NULL DEFAULT 0 CHECK (Financing >= 0),
+    Name NVARCHAR(100) NOT NULL UNIQUE,
+    FacultyId INT NOT NULL,
+    CONSTRAINT CK_Departments_Name_NotEmpty CHECK (Name <> ''),
+    FOREIGN KEY (FacultyId) REFERENCES Faculties(Id)
 );
 
-GO
-
-CREATE TABLE booktToGenres(
-  id INT PRIMARY KEY IDENTITY(1,1),
-  id_book INT FOREIGN KEY REFERENCES books(id),
-  id_genre INT FOREIGN KEY REFERENCES genres(id)
+CREATE TABLE Groups
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(10) NOT NULL UNIQUE,
+    Year INT NOT NULL CHECK (Year BETWEEN 1 AND 5),
+    DepartmentId INT NOT NULL,
+    CONSTRAINT CK_Groups_Name_NotEmpty CHECK (Name <> ''),
+    FOREIGN KEY (DepartmentId) REFERENCES Departments(Id)
 );
 
-INSERT INTO genres (title) VALUES 
-('Fantasy'),
-('Science Fiction'),
-('Detective'),
-('Romance'),
-('Horror'),
-('Historical'),
-('Adventure'),
-('Drama');
-
-INSERT INTO authors (name, surname) VALUES
-('Stephen', 'King'),
-('Agatha', 'Christie'),
-('J.K.', 'Rowling'),
-('George', 'Orwell'),
-('Jane', 'Austen'),
-('Ernest', 'Hemingway'),
-('Mark', 'Twain'),
-('Arthur', 'Doyle');
-
-
-INSERT INTO books (title, [year], price, id_author) VALUES
-('The Shining', 1977, 15.99, 1),
-('Murder on the Orient Express', 1934, 12.50, 2),
-('Harry Potter and the Philosopher''s Stone', 1997, 20.00, 3),
-('1984', 1949, 14.30, 4),
-('Pride and Prejudice', 1813, 10.99, 5),
-('The Old Man and the Sea', 1952, 13.45, 6),
-('Adventures of Huckleberry Finn', 1884, 11.25, 7),
-('Sherlock Holmes: A Study in Scarlet', 1887, 16.75, 8),
-('Animal Farm', 1945, 9.99, 4),
-('It', 1986, 18.60, 1);
-
-
-INSERT INTO booktToGenres (id_book, id_genre) VALUES
-(1, 5),  -- The Shining -> Horror
-(2, 3),  -- Murder on the Orient Express -> Detective
-(3, 1),  -- Harry Potter -> Fantasy
-(3, 7),  -- Harry Potter -> Adventure
-(4, 2),  -- 1984 -> Science Fiction
-(4, 8),  -- 1984 -> Drama
-(5, 4),  -- Pride and Prejudice -> Romance
-(6, 8),  -- The Old Man and the Sea -> Drama
-(7, 7),  -- Huckleberry Finn -> Adventure
-(8, 3),  -- Sherlock Holmes -> Detective
-(9, 2),  -- Animal Farm -> Science Fiction
-(10, 5); -- It -> Horror
-
-SELECT b.id, b.title, b.year, b.price, g.title FROM books b
-INNER JOIN booktToGenres bg
-ON b.id=bg.id_book
-INNER JOIN genres g
-ON bg.id_genre=g.id;
-
-GO
-SELECT b.id, b.title, b.year, b.price, g.title
-FROM books b, genres g, booktToGenres bg
-WHERE b.id=bg.id_book AND g.id=bg.id_genre
-
-GO
-
-SELECT 
-    b.title,
-    a.name,
-    a.surname,
-    COUNT(bg.id_genre) AS genre_count
-FROM books b
-JOIN authors a ON b.id_author = a.id
-LEFT JOIN booktToGenres bg ON b.id = bg.id_book
-GROUP BY b.title, a.name, a.surname;
-
-GO
-
-SELECT 
-    a.id,
-    a.name,
-    a.surname,
-    COUNT(DISTINCT bg.id_genre) AS genre_count
-FROM authors a
-LEFT JOIN books b 
-    ON a.id = b.id_author
-LEFT JOIN booktToGenres bg 
-    ON b.id = bg.id_book
-GROUP BY 
-    a.id,
-    a.name,
-    a.surname
-ORDER BY a.id;
-
-GO
-SELECT 
-    b.title,
-    b.price,
-    g.title AS genre
-FROM books b
-JOIN booktToGenres bg ON b.id = bg.id_book
-JOIN genres g ON bg.id_genre = g.id
-WHERE b.price = (
-    SELECT MAX(price) 
-    FROM books
+CREATE TABLE Subjects
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL UNIQUE,
+    CONSTRAINT CK_Subjects_Name_NotEmpty CHECK (Name <> '')
 );
-GO
 
-CREATE VIEW books_authors_view
-AS
-SELECT b.id, b.title, b.price, a.surname FROM books b
-INNER JOIN authors a
-ON b.id_author=a.id
+CREATE TABLE Teachers
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(MAX) NOT NULL,
+    Surname NVARCHAR(MAX) NOT NULL,
+    Salary MONEY NOT NULL CHECK (Salary > 0),
+    CONSTRAINT CK_Teachers_Name_NotEmpty CHECK (Name <> ''),
+    CONSTRAINT CK_Teachers_Surname_NotEmpty CHECK (Surname <> '')
+);
 
-GO
-SELECT title FROM books_authors_view WHERE price>16;
+CREATE TABLE Lectures
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    DayOfWeek INT NOT NULL CHECK (DayOfWeek BETWEEN 1 AND 7),
+    LectureRoom NVARCHAR(MAX) NOT NULL,
+    SubjectId INT NOT NULL,
+    TeacherId INT NOT NULL,
+    CONSTRAINT CK_Lectures_Room_NotEmpty CHECK (LectureRoom <> ''),
+    FOREIGN KEY (SubjectId) REFERENCES Subjects(Id),
+    FOREIGN KEY (TeacherId) REFERENCES Teachers(Id)
+);
 
-GO
+CREATE TABLE GroupsLectures
+(
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    GroupId INT NOT NULL,
+    LectureId INT NOT NULL,
+    FOREIGN KEY (GroupId) REFERENCES Groups(Id),
+    FOREIGN KEY (LectureId) REFERENCES Lectures(Id)
+);
 
-CREATE VIEW books_genres_view AS
+
+INSERT INTO Faculties (Name)
+VALUES 
+('Computer Science'),
+('Engineering');
+
+INSERT INTO Departments (Financing, Name, FacultyId)
+VALUES
+(50000, 'Software Development', 1),
+(30000, 'Cyber Security', 1),
+(20000, 'Mechanical Systems', 2);
+
+INSERT INTO Groups (Name, Year, DepartmentId)
+VALUES
+('SD101', 1, 1),
+('SD201', 2, 1),
+('CS101', 1, 2),
+('MS101', 1, 3);
+
+INSERT INTO Subjects (Name)
+VALUES
+('C# Programming'),
+('Databases'),
+('Algorithms'),
+('Physics');
+
+INSERT INTO Teachers (Name, Surname, Salary)
+VALUES
+('Dave', 'McQueen', 3000),
+('Jack', 'Underhill', 3500),
+('Anna', 'Smith', 2800);
+
+INSERT INTO Lectures (DayOfWeek, LectureRoom, SubjectId, TeacherId)
+VALUES
+(1, 'D201', 1, 1),
+(2, 'D202', 2, 1),
+(3, 'D201', 3, 2),
+(4, 'A101', 4, 3),
+(5, 'D201', 2, 2);
+
+INSERT INTO GroupsLectures (GroupId, LectureId)
+VALUES
+(1,1),(1,2),
+(2,1),(2,3),
+(3,3),(3,5),
+(4,4);
+
+
+--1
+SELECT COUNT(T.Id) AS TeacherCount
+FROM Teachers T
+JOIN Lectures L ON T.Id = L.TeacherId
+JOIN GroupsLectures GL ON L.Id = GL.LectureId
+JOIN Groups G ON G.Id = GL.GroupId
+JOIN Departments D ON G.DepartmentId = D.Id
+WHERE D.Name = 'Software Development';
+
+--2
+SELECT COUNT(*) AS LectureCount
+FROM Lectures L
+JOIN Teachers T ON L.TeacherId = T.Id
+WHERE T.Name = 'Dave' AND T.Surname = 'McQueen';
+
+--3
+SELECT COUNT(*) AS LectureCount
+FROM Lectures
+WHERE LectureRoom = 'D201';
+
+--4
+SELECT LectureRoom, COUNT(*) AS LectureCount
+FROM Lectures
+GROUP BY LectureRoom;
+
+--5
+SELECT COUNT(DISTINCT G.Id) AS StudentGroupsCount
+FROM Lectures L
+JOIN Teachers T ON L.TeacherId = T.Id
+JOIN GroupsLectures GL ON L.Id = GL.LectureId
+JOIN Groups G ON G.Id = GL.GroupId
+WHERE T.Name = 'Jack' AND T.Surname = 'Underhill';
+
+--6
+SELECT AVG(T.Salary) AS AverageSalary
+FROM Teachers T
+JOIN Lectures L ON T.Id = L.TeacherId
+JOIN GroupsLectures GL ON L.Id = GL.LectureId
+JOIN Groups G ON G.Id = GL.GroupId
+JOIN Departments D ON G.DepartmentId = D.Id
+JOIN Faculties F ON D.FacultyId = F.Id
+WHERE F.Name = 'Computer Science';
+
+--7
+SELECT MIN(StudentCount) AS MinStudents,
+       MAX(StudentCount) AS MaxStudents
+FROM
+(
+    SELECT COUNT(GL.Id) AS StudentCount
+    FROM Groups G
+    LEFT JOIN GroupsLectures GL ON G.Id = GL.GroupId
+    GROUP BY G.Id
+) AS GroupCounts;
+
+--8
+SELECT AVG(Financing) AS AverageFinancing
+FROM Departments;
+
+--9
+SELECT T.Name + ' ' + T.Surname AS FullName,
+       COUNT(DISTINCT L.SubjectId) AS SubjectsCount
+FROM Teachers T
+LEFT JOIN Lectures L ON T.Id = L.TeacherId
+GROUP BY T.Name, T.Surname;
+
+--10
+SELECT DayOfWeek,
+       COUNT(*) AS LectureCount
+FROM Lectures
+GROUP BY DayOfWeek
+ORDER BY DayOfWeek;
+
+--11
+SELECT L.LectureRoom,
+       COUNT(DISTINCT D.Id) AS DepartmentsCount
+FROM Lectures L
+JOIN GroupsLectures GL ON L.Id = GL.LectureId
+JOIN Groups G ON G.Id = GL.GroupId
+JOIN Departments D ON G.DepartmentId = D.Id
+GROUP BY L.LectureRoom;
+
+--12
+SELECT F.Name,
+       COUNT(DISTINCT S.Id) AS SubjectsCount
+FROM Faculties F
+JOIN Departments D ON D.FacultyId = F.Id
+JOIN Groups G ON G.DepartmentId = D.Id
+JOIN GroupsLectures GL ON GL.GroupId = G.Id
+JOIN Lectures L ON L.Id = GL.LectureId
+JOIN Subjects S ON S.Id = L.SubjectId
+GROUP BY F.Name;
+
+--13
 SELECT 
-    b.id AS book_id,
-    b.title AS book_title,
-    b.price,
-    STRING_AGG(g.title, ', ') AS genres
-FROM books b
-JOIN booktToGenres bg ON b.id = bg.id_book
-JOIN genres g ON bg.id_genre = g.id
-GROUP BY b.id, b.title, b.price;
-GO
-
-SELECT *
-FROM books_genres_view
-WHERE price > 12
-  AND genres NOT LIKE '%Fantasy%';
-GO
---
-ALTER TABLE books
-ADD is_active BIT DEFAULT(1);
-
-GO
-SELECT * FROM books;
-GO
-
-UPDATE books SET is_active=1;
-
-GO
-
-ALTER TABLE books
-
-GO
-CREATE TRIGGER booksDeleteTrigger
-ON books
-INSTEAD OF DELETE
-AS
-BEGIN
-  -- inserted, deleted
-  UPDATE books SET is_active=0
-  WHERE id IN(
-  SELECT id FROM deleted)
-END
-
-GO
-
-DROP TRIGGER  booksDeleteTrigger
-GO
-
-DELETE FROM books WHERE id IN(2,3);
-
-SELECT * FROM books;
-
-GO 
---
-ALTER TABLE authors
-ADD discount DECIMAL(5,2) NOT NULL DEFAULT 0;
-GO
-
-ALTER TABLE books
-ADD base_price DECIMAL(10,2);
-GO
-
-UPDATE books
-SET base_price = price;
-GO
-
-CREATE TRIGGER trg_UpdateAuthorDiscount
-ON authors
-AFTER UPDATE
-AS
-BEGIN
-    IF UPDATE(discount)
-    BEGIN
-        UPDATE b
-        SET b.price = b.base_price - (b.base_price * i.discount / 100)
-        FROM books b
-        INNER JOIN inserted i ON b.id_author = i.id
-    END
-END
-GO
-
-UPDATE authors
-SET discount = 15
-WHERE id = 1;
-
-SELECT * FROM books;
+    T.Name + ' ' + T.Surname AS Teacher,
+    L.LectureRoom,
+    COUNT(*) AS LectureCount
+FROM Lectures L
+JOIN Teachers T ON L.TeacherId = T.Id
+GROUP BY T.Name, T.Surname, L.LectureRoom;
