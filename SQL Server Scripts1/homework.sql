@@ -1,280 +1,292 @@
-﻿CREATE DATABASE Academy
-USE Academy ;
-CREATE TABLE [Group] (
-    id INT PRIMARY KEY IDENTITY(1,1) NOT NULL,
-    Name NVARCHAR(10) NOT NULL UNIQUE CHECK (LEN(Name) > 0),
-    Rating INT NOT NULL CHECK (Rating >= 0 AND Rating <= 5),
-    Year INT NOT NULL CHECK (Year > 0 AND Year <= 5)
-);
-INSERT INTO [Group] (Name, Rating, Year)
-VALUES
-('G1', 1, 1),
-('G2', 2, 2),
-('G3', 3, 3);
-
-SELECT * FROM [Group];
+﻿CREATE DATABASE UniversityDB;
 GO
 
-CREATE TABLE Departments
-(
-    Id INT PRIMARY KEY IDENTITY(1,1) NOT NULL,
-    Financing MONEY NOT NULL 
-        CONSTRAINT DF_Departments_Financing DEFAULT 0
-        CHECK (Financing >= 0),
-    Name NVARCHAR(100) NOT NULL
-        UNIQUE
-        CHECK (LEN(Name) > 0)
-);
-
-GO 
-INSERT INTO Departments (Name, Financing)
-VALUES
-('Computer Science', 120000),
-('Mathematics', 80000),
-('Physics', 95000),
-('Chemistry', 60000),
-('Biology', 70000),
-('History', 30000),
-('Philosophy', 20000),
-('Economics', 110000),
-('Law', 90000),
-('Engineering', 150000);
-
-SELECT * FROM Departments;
-
+USE UniversityDB;
 GO
 
-CREATE TABLE Faculties
-(
-    Id INT PRIMARY KEY IDENTITY(1,1) NOT NULL,
-    Name NVARCHAR(10) NOT NULL UNIQUE CHECK (LEN(Name) > 0)
+CREATE TABLE Faculties (
+    Id INT IDENTITY PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL UNIQUE CHECK (Name <> '')
 );
+
+CREATE TABLE Departments (
+    Id INT IDENTITY PRIMARY KEY,
+    Building INT NOT NULL CHECK (Building BETWEEN 1 AND 5),
+    Financing MONEY NOT NULL DEFAULT 0 CHECK (Financing >= 0),
+    Name NVARCHAR(100) NOT NULL UNIQUE CHECK (Name <> ''),
+    FacultyId INT NOT NULL,
+    FOREIGN KEY (FacultyId) REFERENCES Faculties(Id)
+);
+
+CREATE TABLE Curators (
+    Id INT IDENTITY PRIMARY KEY,
+    Name NVARCHAR(MAX) NOT NULL CHECK (Name <> ''),
+    Surname NVARCHAR(MAX) NOT NULL CHECK (Surname <> '')
+);
+
+CREATE TABLE Teachers (
+    Id INT IDENTITY PRIMARY KEY,
+    IsProfessor BIT NOT NULL DEFAULT 0,
+    Name NVARCHAR(MAX) NOT NULL CHECK (Name <> ''),
+    Salary MONEY NOT NULL CHECK (Salary > 0),
+    Surname NVARCHAR(MAX) NOT NULL CHECK (Surname <> '')
+);
+
+CREATE TABLE Subjects (
+    Id INT IDENTITY PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL UNIQUE CHECK (Name <> '')
+);
+
+CREATE TABLE Groups (
+    Id INT IDENTITY PRIMARY KEY,
+    Name NVARCHAR(10) NOT NULL UNIQUE CHECK (Name <> ''),
+    Year INT NOT NULL CHECK (Year BETWEEN 1 AND 5),
+    DepartmentId INT NOT NULL,
+    FOREIGN KEY (DepartmentId) REFERENCES Departments(Id)
+);
+
+CREATE TABLE Students (
+    Id INT IDENTITY PRIMARY KEY,
+    Name NVARCHAR(MAX) NOT NULL CHECK (Name <> ''),
+    Rating INT NOT NULL CHECK (Rating BETWEEN 0 AND 5),
+    Surname NVARCHAR(MAX) NOT NULL CHECK (Surname <> '')
+);
+
+CREATE TABLE Lectures (
+    Id INT IDENTITY PRIMARY KEY,
+    Date DATE NOT NULL CHECK (Date <= GETDATE()),
+    SubjectId INT NOT NULL,
+    TeacherId INT NOT NULL,
+    FOREIGN KEY (SubjectId) REFERENCES Subjects(Id),
+    FOREIGN KEY (TeacherId) REFERENCES Teachers(Id)
+);
+
+CREATE TABLE GroupsCurators (
+    Id INT IDENTITY PRIMARY KEY,
+    CuratorId INT NOT NULL,
+    GroupId INT NOT NULL,
+    FOREIGN KEY (CuratorId) REFERENCES Curators(Id),
+    FOREIGN KEY (GroupId) REFERENCES Groups(Id)
+);
+
+CREATE TABLE GroupsLectures (
+    Id INT IDENTITY PRIMARY KEY,
+    GroupId INT NOT NULL,
+    LectureId INT NOT NULL,
+    FOREIGN KEY (GroupId) REFERENCES Groups(Id),
+    FOREIGN KEY (LectureId) REFERENCES Lectures(Id)
+);
+
+CREATE TABLE GroupsStudents (
+    Id INT IDENTITY PRIMARY KEY,
+    GroupId INT NOT NULL,
+    StudentId INT NOT NULL,
+    FOREIGN KEY (GroupId) REFERENCES Groups(Id),
+    FOREIGN KEY (StudentId) REFERENCES Students(Id)
+);
+
 
 INSERT INTO Faculties (Name)
+VALUES ('Computer Science'), ('Engineering');
+
+INSERT INTO Departments (Building, Financing, Name, FacultyId)
+VALUES 
+(1, 150000, 'Software Development', 1),
+(2, 90000, 'Cyber Security', 1),
+(3, 200000, 'Mechanical Engineering', 2);
+
+INSERT INTO Groups (Name, Year, DepartmentId)
+VALUES 
+('D221', 2, 1),
+('S501', 5, 1),
+('S502', 5, 1),
+('C301', 3, 2);
+
+INSERT INTO Curators (Name, Surname)
+VALUES 
+('John', 'Smith'),
+('Anna', 'Brown'),
+('Michael', 'Johnson');
+
+INSERT INTO Teachers (IsProfessor, Name, Salary, Surname)
+VALUES 
+(1, 'Robert', 5000, 'Taylor'),
+(1, 'William', 5500, 'Anderson'),
+(0, 'Emily', 3000, 'Clark'),
+(0, 'Daniel', 3500, 'White');
+
+INSERT INTO Subjects (Name)
+VALUES 
+('Databases'),
+('Algorithms'),
+('Physics');
+
+INSERT INTO Students (Name, Rating, Surname)
 VALUES
-('CS'),
-('Math'),
-('Phys'),
-('Chem'),
-('Bio'),
-('Law'),
-('Econ'),
-('Hist'),
-('Phil'),
-('Eng');
+('Alice', 5, 'Walker'),
+('Bob', 4, 'Hall'),
+('Charlie', 3, 'Allen'),
+('David', 2, 'Young'),
+('Eva', 5, 'King'),
+('Frank', 1, 'Scott'),
+('Grace', 4, 'Green'),
+('Hannah', 3, 'Adams'),
+('Ian', 5, 'Baker'),
+('Jack', 4, 'Nelson'),
+('Kate', 5, 'Carter'),
+('Leo', 5, 'Mitchell');
 
-SELECT * FROM Faculties;
+INSERT INTO GroupsStudents (GroupId, StudentId)
+VALUES
+(1,1),(1,2),(1,3),
+(2,4),(2,5),(2,6),(2,7),(2,8),(2,9),(2,10),(2,11),(2,12),
+(3,1),(3,2),(3,3),
+(4,4),(4,5);
 
-GO
+INSERT INTO GroupsCurators (CuratorId, GroupId)
+VALUES
+(1,1),(2,1),
+(2,2),
+(3,3);
 
-CREATE TABLE Teachers
+INSERT INTO Lectures (Date, SubjectId, TeacherId)
+VALUES
+('2024-01-01',1,1),
+('2024-01-02',1,1),
+('2024-01-03',1,2),
+('2024-01-04',2,2),
+('2024-01-05',2,3),
+('2024-01-06',3,4);
+
+INSERT INTO GroupsLectures (GroupId, LectureId)
+VALUES
+(2,1),(2,2),(2,3),(2,4),(2,5),(2,6),
+(3,1),(3,2),
+(1,4),(1,5);
+
+--1
+SELECT Building
+FROM Departments
+GROUP BY Building
+HAVING SUM(Financing) > 100000;
+
+--2
+SELECT g.Name
+FROM Groups g
+JOIN Departments d ON g.DepartmentId = d.Id
+JOIN GroupsLectures gl ON g.Id = gl.GroupId
+JOIN Lectures l ON gl.LectureId = l.Id
+WHERE g.Year = 5 AND d.Name = 'Software Development'
+GROUP BY g.Name
+HAVING COUNT(gl.Id) > 10;
+
+--3
+SELECT g.Name
+FROM Groups g
+WHERE (
+    SELECT AVG(s.Rating)
+    FROM GroupsStudents gs
+    JOIN Students s ON gs.StudentId = s.Id
+    WHERE gs.GroupId = g.Id
+) >
 (
-    Id INT PRIMARY KEY IDENTITY(1,1) NOT NULL,
-
-    EmploymentDate DATE NOT NULL
-        CHECK (EmploymentDate >= '1990-01-01'),
-
-    Name NVARCHAR(MAX) NOT NULL
-        CHECK (LEN(Name) > 0),
-
-    Premium MONEY NOT NULL
-        CONSTRAINT DF_Teachers_Premium DEFAULT 0
-        CHECK (Premium >= 0),
-
-    Salary MONEY NOT NULL
-        CHECK (Salary > 0),
-
-    Surname NVARCHAR(MAX) NOT NULL
-        CHECK (LEN(Surname) > 0)
+    SELECT AVG(s.Rating)
+    FROM GroupsStudents gs
+    JOIN Students s ON gs.StudentId = s.Id
+    JOIN Groups gr ON gs.GroupId = gr.Id
+    WHERE gr.Name = 'D221'
 );
-GO 
 
-INSERT INTO Teachers (EmploymentDate, Name, Premium, Salary, Surname)
-VALUES
-('1995-03-12', 'Ivan', 500, 12000, 'Petrenko'),
-('2001-07-25', 'Olena', 0, 15000, 'Shevchenko'),
-('2010-09-01', 'Mykola', 300, 11000, 'Bondarenko'),
-('1998-11-18', 'Iryna', 1000, 17000, 'Tkachenko'),
-('2005-02-14', 'Serhii', 0, 13000, 'Kovalchuk'),
-('2018-06-30', 'Natalia', 200, 14000, 'Melnyk'),
-('1992-01-05', 'Andrii', 750, 16000, 'Kravchenko'),
-('2020-09-10', 'Viktor', 0, 12500, 'Lysenko'),
-('1999-04-21', 'Tetiana', 400, 13500, 'Moroz'),
-('2003-12-03', 'Dmytro', 600, 15500, 'Polishchuk');
-
-SELECT * FROM Teachers;
-GO 
-
-ALTER TABLE Teachers
-ADD IsAssistant BIT NOT NULL CONSTRAINT DF_Teachers_IsAssistant DEFAULT 0;
-GO
-
-ALTER TABLE Teachers
-ADD IsProfessor BIT NOT NULL CONSTRAINT DF_Teachers_IsProfessor DEFAULT 0;
-GO
-
-ALTER TABLE Teachers
-ADD Position NVARCHAR(MAX) NOT NULL CONSTRAINT DF_Teachers_Position DEFAULT 'No Position'
-    CHECK (LEN(Position) > 0);
-GO
-
-UPDATE Teachers
-SET Position = 'Assistant', IsAssistant = 1
-WHERE Name IN ('Ivan', 'Natalia');
-
-UPDATE Teachers
-SET Position = 'Professor', IsProfessor = 1
-WHERE Name IN ('Iryna', 'Andrii');
-
-UPDATE Teachers
-SET Position = 'Lecturer'
-WHERE Position = 'No Position';
-GO
-
-SELECT * FROM Teachers;
-GO
-
-ALTER TABLE Faculties
-ALTER COLUMN Name NVARCHAR(100) NOT NULL;
-GO
-
-ALTER TABLE Faculties
-ADD Dean NVARCHAR(MAX) NOT NULL CONSTRAINT DF_Faculties_Dean DEFAULT 'No Dean'
-    CHECK (LEN(Dean) > 0);
-GO
-
-UPDATE Faculties
-SET Dean = 'Dr. Ivanov'
-WHERE Name = 'CS';
-
-UPDATE Faculties
-SET Dean = 'Dr. Petrenko'
-WHERE Name = 'Math';
-
-UPDATE Faculties
-SET Dean = 'Dr. Shevchenko'
-WHERE Dean = 'No Dean';
-GO
-
-SELECT * FROM Faculties;
-GO
-
-INSERT INTO [Group] (Name, Rating, Year)
-VALUES
-('G5A', 3, 5),
-('G5B', 4, 5);
-GO
-
-INSERT INTO Departments (Name, Financing)
-VALUES ('Software Development', 20000);
-GO
-
-INSERT INTO Faculties (Name, Dean)
-VALUES ('Computer Science', 'Dr. Brown');
-GO
-
-INSERT INTO Teachers
-(EmploymentDate, Name, Premium, Salary, Surname,
- IsAssistant, IsProfessor, Position)
-VALUES
-('2019-01-01','Test1',200,500,'Smallpay',1,0,'Assistant'),
-('2018-02-02','Test2',150,400,'Lowmoney',1,0,'Assistant');
-GO
-
--- 1. Таблиця кафедр у зворотному порядку полів
-SELECT Financing, Name, Id
-FROM Departments;
-GO
-
--- 2. Назви груп та рейтинги з псевдонімами
-SELECT Name AS [Group Name],
-       Rating AS [Group Rating]
-FROM [Group];
-GO
-
--- 3. Прізвище + відсоток ставки від надбавки та від загальної зарплати
-SELECT Surname,
-       (Salary * 100.0 / NULLIF(Premium,0)) AS [Salary% of Premium],
-       (Salary * 100.0 / (Salary + Premium)) AS [Salary% of Total]
-FROM Teachers;
-GO
-
--- 4. Факультети одним рядком
-SELECT 'The dean of faculty ' + Name + ' is ' + Dean + '.'
-       AS FacultyInfo
-FROM Faculties;
-GO
-
--- 5. Прізвища професорів зі ставкою > 1050
-SELECT Surname
+--4
+SELECT Name, Surname
 FROM Teachers
-WHERE IsProfessor = 1
-  AND Salary > 1050;
-GO
+WHERE Salary >
+(
+    SELECT AVG(Salary)
+    FROM Teachers
+    WHERE IsProfessor = 1
+);
 
--- 6. Назви кафедр з фінансуванням <11000 або >25000
-SELECT Name
-FROM Departments
-WHERE Financing < 11000
-   OR Financing > 25000;
-GO
+--5
+SELECT g.Name
+FROM Groups g
+JOIN GroupsCurators gc ON g.Id = gc.GroupId
+GROUP BY g.Name
+HAVING COUNT(gc.Id) > 1;
 
--- 7. Назви факультетів, окрім "Computer Science"
-SELECT Name
-FROM Faculties
-WHERE Name <> 'Computer Science';
-GO
+--6
+SELECT g.Name
+FROM Groups g
+WHERE (
+    SELECT AVG(s.Rating)
+    FROM GroupsStudents gs
+    JOIN Students s ON gs.StudentId = s.Id
+    WHERE gs.GroupId = g.Id
+) <
+(
+    SELECT MIN(avg_rating)
+    FROM (
+        SELECT AVG(s.Rating) AS avg_rating
+        FROM Groups gr
+        JOIN GroupsStudents gs ON gr.Id = gs.GroupId
+        JOIN Students s ON gs.StudentId = s.Id
+        WHERE gr.Year = 5
+        GROUP BY gr.Id
+    ) t
+);
 
--- 8. Прізвища та посади не професорів
-SELECT Surname, Position
-FROM Teachers
-WHERE IsProfessor = 0;
-GO
+--7
+SELECT f.Name
+FROM Faculties f
+WHERE (
+    SELECT SUM(d.Financing)
+    FROM Departments d
+    WHERE d.FacultyId = f.Id
+) >
+(
+    SELECT SUM(d.Financing)
+    FROM Departments d
+    JOIN Faculties f2 ON d.FacultyId = f2.Id
+    WHERE f2.Name = 'Computer Science'
+);
 
--- 9. Асистенти з Premium між 160 і 550
-SELECT Surname, Position, Salary, Premium
-FROM Teachers
-WHERE IsAssistant = 1
-  AND Premium BETWEEN 160 AND 550;
-GO
+--8
+SELECT s.Name AS SubjectName,
+       t.Name + ' ' + t.Surname AS TeacherFullName
+FROM Subjects s
+JOIN Lectures l ON s.Id = l.SubjectId
+JOIN Teachers t ON l.TeacherId = t.Id
+GROUP BY s.Name, t.Name, t.Surname
+HAVING COUNT(l.Id) = (
+    SELECT MAX(cnt)
+    FROM (
+        SELECT COUNT(*) AS cnt
+        FROM Lectures
+        GROUP BY SubjectId
+    ) q
+);
 
--- 10. Прізвища та ставки асистентів
-SELECT Surname, Salary
-FROM Teachers
-WHERE IsAssistant = 1;
-GO
+--9
+SELECT TOP 1 s.Name
+FROM Subjects s
+JOIN Lectures l ON s.Id = l.SubjectId
+GROUP BY s.Name
+ORDER BY COUNT(l.Id) ASC;
 
--- 11. Викладачі прийняті до 2000 року
-SELECT Surname, Position
-FROM Teachers
-WHERE EmploymentDate < '2000-01-01';
-GO
-
--- 12. Назви кафедр перед "Software Development"
-SELECT Name AS [Name of Department]
-FROM Departments
-WHERE Name < 'Software Development'
-ORDER BY Name;
-GO
-
--- 13. Асистенти із зарплатою (Salary+Premium) ≤ 1200
-SELECT Surname
-FROM Teachers
-WHERE IsAssistant = 1
-  AND (Salary + Premium) <= 1200;
-GO
-
--- 14. Групи 5 курсу з рейтингом 2–4
-SELECT Name
-FROM [Group]
-WHERE Year = 5
-  AND Rating BETWEEN 2 AND 4;
-GO
-
--- 15. Асистенти зі ставкою <550 або Premium <200
-SELECT Surname
-FROM Teachers
-WHERE IsAssistant = 1
-  AND (Salary < 550 OR Premium < 200);
-GO
-
+--10
+SELECT
+(
+    SELECT COUNT(DISTINCT gs.StudentId)
+    FROM GroupsStudents gs
+    JOIN Groups g ON gs.GroupId = g.Id
+    JOIN Departments d ON g.DepartmentId = d.Id
+    WHERE d.Name = 'Software Development'
+) AS StudentsCount,
+(
+    SELECT COUNT(DISTINCT l.SubjectId)
+    FROM GroupsLectures gl
+    JOIN Groups g ON gl.GroupId = g.Id
+    JOIN Departments d ON g.DepartmentId = d.Id
+    JOIN Lectures l ON gl.LectureId = l.Id
+    WHERE d.Name = 'Software Development'
+) AS SubjectsCount;
